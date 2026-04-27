@@ -106,7 +106,6 @@ void freeHashTable(HashTable* ht) {
         }
     }
     free(ht->table);
-    ht->table = NULL;
     ht->size = 0;
     ht->numOfElements = 0;
 }

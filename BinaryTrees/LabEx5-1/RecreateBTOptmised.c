@@ -1,18 +1,12 @@
 #include <time.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include "../Common/hash_table.h"
 #include "../Common/tree.h"
 
-static int findIndex(const char inorder[], int start, int end, char value) {
-    for (int i = start; i <= end; i++) {
-        if (inorder[i] == value) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-Node* buildTreeFromPreIn(const char preorder[], const char inorder[], int inStart, int inEnd, int* preIndex) {
+Node* buildTreeFromPreInOptimized(const char preorder[], const char inorder[], int inStart, int inEnd, HashTable* ht, int* preIndex) {
     if (inStart > inEnd || *preIndex < 0) {
         return NULL;
     }
@@ -27,17 +21,17 @@ Node* buildTreeFromPreIn(const char preorder[], const char inorder[], int inStar
         return node;
     }
 
-    int inIndex = findIndex(inorder, inStart, inEnd, current);
-    if (inIndex == -1) {
+    int inIndex = getHashNodeValue(ht, current);
+    if (inIndex < inStart || inIndex > inEnd) {
         return node;
     }
 
-    node->left = buildTreeFromPreIn(preorder, inorder, inStart, inIndex - 1, preIndex);
-    node->right = buildTreeFromPreIn(preorder, inorder, inIndex + 1, inEnd, preIndex);
+    node->left = buildTreeFromPreInOptimized(preorder, inorder, inStart, inIndex - 1, ht, preIndex);
+    node->right = buildTreeFromPreInOptimized(preorder, inorder, inIndex + 1, inEnd, ht, preIndex);
     return node;
 }
 
-Node* buildTreeFromPostIn(const char postorder[], const char inorder[], int inStart, int inEnd, int* postIndex) {
+Node* buildTreeFromPostInOptimized(const char postorder[], const char inorder[], int inStart, int inEnd, HashTable* ht, int* postIndex) {
     if (inStart > inEnd || *postIndex < 0) {
         return NULL;
     }
@@ -52,13 +46,13 @@ Node* buildTreeFromPostIn(const char postorder[], const char inorder[], int inSt
         return node;
     }
 
-    int inIndex = findIndex(inorder, inStart, inEnd, current);
-    if (inIndex == -1) {
+    int inIndex = getHashNodeValue(ht, current);
+    if (inIndex < inStart || inIndex > inEnd) {
         return node;
     }
 
-    node->right = buildTreeFromPostIn(postorder, inorder, inIndex + 1, inEnd, postIndex);
-    node->left = buildTreeFromPostIn(postorder, inorder, inStart, inIndex - 1, postIndex);
+    node->right = buildTreeFromPostInOptimized(postorder, inorder, inIndex + 1, inEnd, ht, postIndex);
+    node->left = buildTreeFromPostInOptimized(postorder, inorder, inStart, inIndex - 1, ht, postIndex);
     return node;
 }
 
@@ -71,35 +65,74 @@ void preOrderTraversal(const Node* root) {
     preOrderTraversal(root->right);
 }
 
+bool checkInput(const char* preorder, const char* inorder, const char* postorder) {
+    if (preorder == NULL || inorder == NULL || postorder == NULL) {
+        fprintf(stderr, "Input strings cannot be NULL.\n");
+        return false;
+    }
+    if (strlen(preorder) != strlen(inorder) || strlen(inorder) != strlen(postorder)) {
+        fprintf(stderr, "Input strings must be of the same length.\n");
+        return false;
+    }
+    if (strlen(inorder) == 0) {
+        fprintf(stderr, "Input strings cannot be empty.\n");
+        return false;
+    }
+    return true;
+
+}
+
 // int main(void) {
 //     const char preorder[] = "ABDEGUHQJLXRWCMOIPFKSTVYNZ";
 //     const char inorder[] = "GUEQHDLXJRWBMOCPIAFSYVTKNZ";
 //     const char postorder[] = "UGQHEXLWRJDOMPICBYVTSZNKFA";
 
+//     if (!checkInput(preorder, inorder, postorder)) {
+//         return 1;
+//     }
+//
 //     int length = strlen(inorder);
 //     int preIndex = 0;
 //     int postIndex = length - 1;
+//
+//     HashTable* ht = malloc(sizeof(HashTable));
+//     if (ht == NULL) {
+//         fprintf(stderr, "Memory allocation failed for hash table.\n");
+//         return 1;
+//     }
+
+//     initHashTable(ht, length);
+//     for (int i = 0; i < length; i++) {
+//         insertHashNode(ht, inorder[i], i);
+//     }
 
 //     clock_t begin = clock();
-//     Node* root1 = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
-//     Node* root2 = buildTreeFromPostIn(postorder, inorder, 0, length - 1, &postIndex);
+//     Node* root1 = buildTreeFromPostInOptimized(postorder, inorder, 0, length - 1, ht, &postIndex);
+//     Node* root2 = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
 //     clock_t end = clock();
 
 //     double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-//     printf("Time taken to build trees (unoptimized): %f seconds\n", time_spent);
+//     printf("Time taken to build trees (optimized): %f seconds\n", time_spent);
 
-//     printf("Preorder Traversal of the reconstructed tree: ");
+//     printf("Preorder Traversal of the reconstructed tree from postorder (optimized): ");
 //     preOrderTraversal(root1);
 //     printf("\n");
 
-//     printf("Preorder Traversal of the reconstructed tree from postorder: ");
+//     printf("Preorder Traversal of the reconstructed tree from preorder (optimized): ");
 //     preOrderTraversal(root2);
 //     printf("\n");
 
 //     freeTree(root1);
 //     freeTree(root2);
+//     freeHashTable(ht);
 //     return 0;
 // }
+
+// =================================================================================
+// =============================  TEST FOR TREE BUILDING  ===================
+// =================================================================================
+// Uncomment τον παρακάτω κώδικα για να τρέξετε τα tests 
+// και comment out τη main() παραπάνω.
 
 void verifyTraversal(const char* expected, Node* root, const char* testName) {
     printf("  %s: Expected: %s\n  Traversal: ", testName, expected);
@@ -129,8 +162,18 @@ int main(void) {
         int length = strlen(inorder);
         int preIndex = 0;
 
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
         clock_t begin = clock();
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         clock_t end = clock();
 
         printf("Time: %f seconds\n", (double)(end - begin) / CLOCKS_PER_SEC);
@@ -139,6 +182,7 @@ int main(void) {
         printf("\n");
         runTest("Single character reconstructs correctly", root != NULL && root->data == 'A');
         freeTree(root);
+        freeHashTable(ht);
     }
 
     // Test 5.2: Two nodes - left child only
@@ -149,7 +193,18 @@ int main(void) {
         int length = strlen(inorder);
         int preIndex = 0;
 
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         printf("Reconstructed tree: ");
         preOrderTraversal(root);
         printf("\n");
@@ -157,6 +212,7 @@ int main(void) {
         runTest("Left child is B", root->left != NULL && root->left->data == 'B');
         runTest("No right child", root->right == NULL);
         freeTree(root);
+        freeHashTable(ht);
     }
 
     // Test 5.3: Two nodes - right child only
@@ -167,7 +223,19 @@ int main(void) {
         int length = strlen(inorder);
         int preIndex = 0;
 
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         printf("Reconstructed tree: ");
         preOrderTraversal(root);
         printf("\n");
@@ -175,6 +243,7 @@ int main(void) {
         runTest("Right child is B", root->right != NULL && root->right->data == 'B');
         runTest("No left child", root->left == NULL);
         freeTree(root);
+        freeHashTable(ht);
     }
 
     // Test 5.4: Three nodes - balanced
@@ -185,7 +254,18 @@ int main(void) {
         int length = strlen(inorder);
         int preIndex = 0;
 
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         printf("Reconstructed tree: ");
         preOrderTraversal(root);
         printf("\n");
@@ -193,6 +273,7 @@ int main(void) {
         runTest("Left child is B", root->left != NULL && root->left->data == 'B');
         runTest("Right child is C", root->right != NULL && root->right->data == 'C');
         freeTree(root);
+        freeHashTable(ht);
     }
 
     // Test 5.5: Skewed left (linear)
@@ -203,7 +284,18 @@ int main(void) {
         int length = strlen(inorder);
         int preIndex = 0;
 
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         printf("Reconstructed tree: ");
         preOrderTraversal(root);
         printf("\n");
@@ -212,6 +304,7 @@ int main(void) {
         runTest("All nodes have left children only", 
                 root->right == NULL && root->left->right == NULL);
         freeTree(root);
+        freeHashTable(ht);
     }
 
     // Test 5.6: Skewed right (linear)
@@ -222,7 +315,18 @@ int main(void) {
         int length = strlen(inorder);
         int preIndex = 0;
 
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         printf("Reconstructed tree: ");
         preOrderTraversal(root);
         printf("\n");
@@ -231,6 +335,7 @@ int main(void) {
         runTest("All nodes have right children only", 
                 root->left == NULL && root->right->left == NULL);
         freeTree(root);
+        freeHashTable(ht);
     }
 
     // Test 5.7: Complex balanced tree
@@ -241,8 +346,19 @@ int main(void) {
         int length = strlen(inorder);
         int preIndex = 0;
 
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
         clock_t begin = clock();
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         clock_t end = clock();
 
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -258,6 +374,7 @@ int main(void) {
         printf("\n");
         runTest("Complex tree reconstructed correctly", root != NULL);
         freeTree(root);
+        freeHashTable(ht);
     }
 
     // Test 5.8: Minimal valid input
@@ -266,23 +383,33 @@ int main(void) {
         const char preorder[] = "";
         const char inorder[] = "";
         int length = strlen(inorder);
-        
+
         if (length == 0) {
             printf("Empty input detected - no tree creation\n");
-            runTest("Handles empty input gracefully", 1);
+            runTest("Handles empty input. In real scenario handled by checkInput()", 1);
         }
     }
 
     // Test 5.9: Single letter repeated (if allowed)
     printf("\n--- Test 5.9: Single Character Repeated ---\n");
     {
-        const char preorder[] = "AAA";
-        const char inorder[] = "AAA";
+        const char preorder[] = "AAAA";
+        const char inorder[] = "AAAA";
         int length = strlen(inorder);
         int preIndex = 0;
 
-        // Note: This might not work correctly if your code expects unique characters
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         if (root != NULL) {
             printf("Reconstructed tree: ");
             preOrderTraversal(root);
@@ -292,39 +419,29 @@ int main(void) {
             printf("Tree is NULL (expected if duplicates not supported)\n");
         }
         freeTree(root);
+        freeHashTable(ht);
     }
 
-    // Test 5.10: Large dataset performance
-    printf("\n--- Test 5.10: Performance Comparison ---\n");
-    {
-        const char preorder[] = "ABDEGUHQJLXRWCMOIPFKSTVYNZ";
-        const char inorder[] = "GUEQHDLXJRWBMOCPIAFSYVTKNZ";
-        int length = strlen(inorder);
-        
-        printf("Dataset size: %d characters\n", length);
-        
-        int preIndex = 0;
-        clock_t begin = clock();
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
-        clock_t end = clock();
-        
-        double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-        printf("Time taken: %f seconds\n", time_spent);
-        printf("Operations: ~n² = ~%d for unoptimized\n", length * length);
-        
-        runTest("Completes in reasonable time", time_spent < 1.0);
-        freeTree(root);
-    }
-
-    // Test 5.11: Validate tree structure with multiple traversals
-    printf("\n--- Test 5.11: Structural Validation ---\n");
+    // Test 5.10: Validate tree structure with multiple traversals
+    printf("\n--- Test 5.10: Structural Validation ---\n");
     {
         const char preorder[] = "ABC";
         const char inorder[] = "BAC";
         int length = strlen(inorder);
         int preIndex = 0;
 
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         
         printf("Preorder:  ");
         preOrderTraversal(root);
@@ -334,17 +451,29 @@ int main(void) {
         
         runTest("Tree structure matches input traversals", root != NULL);
         freeTree(root);
+        freeHashTable(ht);
     }
 
-    // Test 5.12: Longer sequence validation
-    printf("\n--- Test 5.12: Extended Validation ---\n");
+    // Test 5.11: Longer sequence validation
+    printf("\n--- Test 5.11: Extended Validation ---\n");
     {
         const char preorder[] = "ABDEGUHQJLXRWCMOIPFKSTVYNZ";
         const char inorder[] = "GUEQHDLXJRWBMOCPIAFSYVTKNZ";
         int length = strlen(inorder);
         int preIndex = 0;
 
-        Node* root = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
+        HashTable* ht = malloc(sizeof(HashTable));
+        if (ht == NULL) {
+            fprintf(stderr, "Memory allocation failed for hash table.\n");
+            return 1;
+        }
+
+        initHashTable(ht, length);
+        for (int i = 0; i < length; i++) {
+            insertHashNode(ht, inorder[i], i);
+        }
+
+        Node* root = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
         
         if (root != NULL) {
             printf("Input preorder:  %s\n", preorder);
@@ -356,10 +485,11 @@ int main(void) {
             runTest("Root is first character of preorder", root->data == preorder[0]);
         }
         freeTree(root);
+        freeHashTable(ht);
     }
 
     printf("\n================================================================================\n");
-    printf("                      Test Suite Complete\n");
+    printf("               Test Suite Complete for Optimized Version\n");
     printf("                    %d/%d tests passed\n", passCount, testCount);
     printf("================================================================================\n\n");
 
