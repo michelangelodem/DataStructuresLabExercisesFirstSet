@@ -12,7 +12,7 @@ void setHashNode(HashNode* n, char key, unsigned int value) {
     n->key = key;
     n->value = value;
     n->next = NULL;
-} //allagh 1 
+} 
 
 void initHashTable(HashTable* ht, int size) {
     if (size <= 0) {
