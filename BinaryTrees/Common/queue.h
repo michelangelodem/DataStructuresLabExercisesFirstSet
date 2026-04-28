@@ -7,7 +7,7 @@
 #define MAX_SIZE 100
 
 typedef struct Queue {
-    Node** data; //Πινακας από δείκτες 
+    Node** data; 
     int front;
     int back;
     int count;

@@ -1,11 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "OrderLevel.h"
+#include "HeightLevel.h"
 
 // =================================================================================
-// =============================  TEST BINARY TREE TRAVERSAL  =====================
+// =============================  TEST TREE HEIGHT AND LEVEL  ======================
 // =================================================================================
 
-void runTests(Node* root) {
+int main(void) {
+
     return 0;
 }
