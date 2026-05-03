@@ -1,4 +1,7 @@
-#include "RecreateBinaryTree.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "RecreateBTOptimised.h"
 
 // =================================================================================
 // =============================  TEST FOR TREE BUILDING  ==========================
@@ -22,14 +25,31 @@ Node* testWrapper(const char* preorder, const char* postorder, const char* inord
     int preIndex = 0;
     int postIndex = length - 1;
 
-    Node* preRoot = buildTreeFromPreIn(preorder, inorder, 0, length - 1, &preIndex);
-    Node* postRoot = buildTreeFromPostIn(postorder, inorder, 0, length - 1, &postIndex);
+    HashTable* ht = malloc(sizeof(HashTable));
+    if (ht == NULL) {
+        fprintf(stderr, "Memory allocation failed for hash table.\n");
+        return NULL;
+    }
+
+    initHashTable(ht, length);
+    for (int i = 0; i < length; i++) {
+        insertHashNode(ht, inorder[i], i);
+    }
+
+    Node* preRoot = buildTreeFromPreInOptimized(preorder, inorder, 0, length - 1, ht, &preIndex);
+    
+    // Reset postIndex for postorder traversal
+    postIndex = length - 1;
+    Node* postRoot = buildTreeFromPostInOptimized(postorder, inorder, 0, length - 1, ht, &postIndex);
+    
     printf("Preorder result:  ");
     preOrderTraversal(preRoot);
     printf("\nPostorder result: ");
     preOrderTraversal(postRoot);
     printf("\n");
+    
     freeTree(postRoot);
+    freeHashTable(ht);
     return preRoot;
 }
 
@@ -40,9 +60,9 @@ int main(void) {
         const char preorder[] = "A";
         const char inorder[] = "A";
         const char postorder[] = "A";
-        Node* preRoot = testWrapper(preorder, postorder, inorder);
-        printOutcome("Single character reconstructs correctly", preRoot != NULL && preRoot->data == 'A');
-        freeTree(preRoot);
+        Node* root = testWrapper(preorder, postorder, inorder);
+        printOutcome("Single character reconstructs correctly", root != NULL && root->data == 'A');
+        freeTree(root);
     }
 
     // Test 5.2: Two nodes - left child only
@@ -52,11 +72,11 @@ int main(void) {
         const char inorder[] = "BA";
         const char postorder[] = "BA";
 
-        Node* preRoot = testWrapper(preorder, postorder, inorder);
-        printOutcome("Root is A", preRoot != NULL && preRoot->data == 'A');
-        printOutcome("Left child is B", preRoot->left != NULL && preRoot->left->data == 'B');
-        printOutcome("No right child", preRoot->right == NULL);
-        freeTree(preRoot);
+        Node* root = testWrapper(preorder, postorder, inorder);
+        printOutcome("Root is A", root != NULL && root->data == 'A');
+        printOutcome("Left child is B", root->left != NULL && root->left->data == 'B');
+        printOutcome("No right child", root->right == NULL);
+        freeTree(root);
     }
 
     // Test 5.3: Two nodes - right child only
@@ -66,11 +86,11 @@ int main(void) {
         const char inorder[] = "AB";
         const char postorder[] = "BA";
 
-        Node* preRoot = testWrapper(preorder, postorder, inorder);
-        printOutcome("Root is A", preRoot != NULL && preRoot->data == 'A');
-        printOutcome("Right child is B", preRoot->right != NULL && preRoot->right->data == 'B');
-        printOutcome("No left child", preRoot->left == NULL);
-        freeTree(preRoot);
+        Node* root = testWrapper(preorder, postorder, inorder);
+        printOutcome("Root is A", root != NULL && root->data == 'A');
+        printOutcome("Right child is B", root->right != NULL && root->right->data == 'B');
+        printOutcome("No left child", root->left == NULL);
+        freeTree(root);
     }
 
     // Test 5.4: Three nodes - balanced
@@ -80,21 +100,7 @@ int main(void) {
         const char inorder[] = "BAC";
         const char postorder[] = "BCA";
 
-        Node* preRoot = testWrapper(preorder, postorder, inorder);
-        printOutcome("Root is A", preRoot != NULL && preRoot->data == 'A');
-        printOutcome("Left child is B", preRoot->left != NULL && preRoot->left->data == 'B');
-        printOutcome("Right child is C", preRoot->right != NULL && preRoot->right->data == 'C');
-        freeTree(preRoot);
-    }
-
-    // Test 5.4: Three nodes - balanced
-    printf("\n--- Test 5.4: Three Nodes (Balanced) ---\n");
-    {
-        const char preorder[] = "ABC";
-        const char inorder[] = "BAC";
-        const char postorder[] = "BCA";
-
-        Node* root = testWrapper(preorder, postorder, inorder);  
+        Node* root = testWrapper(preorder, postorder, inorder);
         printOutcome("Root is A", root != NULL && root->data == 'A');
         printOutcome("Left child is B", root->left != NULL && root->left->data == 'B');
         printOutcome("Right child is C", root->right != NULL && root->right->data == 'C');
@@ -143,7 +149,7 @@ int main(void) {
         freeTree(root);
     }
 
-    // Test 5.8: Edge Case - Single Character Repeated
+    // Test 5.8: Single Character Repeated
     printf("\n--- Test 5.8: Single Character Repeated ---\n");
     {
         const char preorder[] = "AAAA";
@@ -159,6 +165,5 @@ int main(void) {
     printf("                      Test Suite Complete\n");
     printf("                    %d/%d tests passed\n", passCount, testCount);
     printf("================================================================================\n\n");
-
     return 0;
 }

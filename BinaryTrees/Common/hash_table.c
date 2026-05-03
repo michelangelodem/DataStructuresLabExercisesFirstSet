@@ -2,7 +2,7 @@
 
 /*
  Hash table υλοποίηση για αντιστοίχηση χαρακτήρων σε ακέραιες τιμές. 
- Χρησημοποιείται απο την LabEx5-1 για βελτιστοποίηση της αναζήτησης των δεικτών των χαρακτήρων στο inorder traversal.
+ Χρησιμοποιείται από την LabEx5-1 για βελτιστοποίηση της αναζήτησης των δεικτών των χαρακτήρων στο inorder traversal.
  Έχοντας ως κλειδιά τους χαρακτήρες του inorder traversal και ως τιμές τους αντίστοιχους δείκτες τους.
  Έτσι μπορούμε να βρούμε γρήγορα τη θέση ενός χαρακτήρα στο inorder traversal, 
  μειώνοντας τον χρόνο κατασκευής του δέντρου από O(n^2) σε O(n).
@@ -31,52 +31,31 @@ void initHashTable(HashTable* ht, int size) {
 }
 
 unsigned int hashFunction(const HashTable* ht, char key) {
-    return (unsigned char)key % ht->size;
+    return ((unsigned char)key) % ht->size;
 }
 
 void insertHashNode(HashTable* ht, char key, unsigned int value) {
     if (ht == NULL || ht->table == NULL || ht->size == 0) {
         return;
     }
-
     unsigned int index = hashFunction(ht, key);
-    HashNode* newHNode = (HashNode*)malloc(sizeof(HashNode));
-    if (newHNode == NULL) {
-        return;
-    }
+    HashNode* newHNode;
 
-    setHashNode(newHNode, key, value);
+    if (ht->nodes_pool != NULL && ht->pool_idx < ht->pool_cap) {
+        newHNode = &ht->nodes_pool[ht->pool_idx++];
+    } else {
+        newHNode = (HashNode*)malloc(sizeof(HashNode));
+        if (newHNode == NULL) return;
+    }
+    newHNode->key = key;
+    newHNode->value = value;
+    newHNode->next = NULL;
     newHNode->next = ht->table[index];
     ht->table[index] = newHNode;
     ht->numOfElements++;
 }
 
-void deleteHashNode(HashTable* ht, char key) {
-    if (ht == NULL || ht->table == NULL || ht->size == 0) {
-        return;
-    }
-
-    unsigned int index = hashFunction(ht, key);
-    HashNode* current = ht->table[index];
-    HashNode* prev = NULL;
-
-    while (current != NULL) {
-        if (current->key == key) {
-            if (prev == NULL) {
-                ht->table[index] = current->next;
-            } else {
-                prev->next = current->next;
-            }
-            free(current);
-            ht->numOfElements--;
-            return;
-        }
-        prev = current;
-        current = current->next;
-    }
-}
-
-int getHashNodeValue(HashTable* ht, char key) {
+int getHashNodeValueInRange(HashTable* ht, char key, int start, int end) {
     if (ht == NULL || ht->table == NULL || ht->size == 0) {
         return -1;
     }
@@ -84,7 +63,7 @@ int getHashNodeValue(HashTable* ht, char key) {
     unsigned int index = hashFunction(ht, key);
     HashNode* current = ht->table[index];
     while (current != NULL) {
-        if (current->key == key) {
+        if (current->key == key && current->value >= (unsigned int)start && current->value <= (unsigned int)end) {
             return current->value;
         }
         current = current->next;
@@ -105,7 +84,9 @@ void freeHashTable(HashTable* ht) {
             free(temp);
         }
     }
-    free(ht->table);
+    ht->table = NULL;
+    ht->pool_cap = 0;
+    ht->pool_idx = 0;
     ht->size = 0;
     ht->numOfElements = 0;
 }

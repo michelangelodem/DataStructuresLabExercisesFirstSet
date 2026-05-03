@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "BalancedParantheses.h"
+#include "BalancedParentheses.h"
 
 
 int main(void) {

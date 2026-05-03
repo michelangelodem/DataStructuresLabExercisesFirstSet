@@ -18,13 +18,17 @@ typedef struct HashTable {
     int numOfElements;
     int size;
     HashNode** table;
+    // pre-allocated κομματι μνημης για τα nodes του hash table, 
+    // ωστε να μειωσουμε τα malloc calls και να αποφευχθουν cache crashes.
+    HashNode* nodes_pool; 
+    int pool_idx;
+    int pool_cap;
 } HashTable;
 
 void initHashTable(HashTable* ht, int size);
 unsigned int hashFunction(const HashTable* ht, char key);
 void insertHashNode(HashTable* ht, char key, unsigned int value);
-void deleteHashNode(HashTable* ht, char key);
-int getHashNodeValue(HashTable* ht, char key);
+int getHashNodeValueInRange(HashTable* ht, char key, int start, int end);
 void freeHashTable(HashTable* ht);
 
 #endif

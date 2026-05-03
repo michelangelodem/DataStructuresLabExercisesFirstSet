@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "BalancedParantheses.h"
+#include "BalancedParentheses.h"
 
 // =================================================================================
 // =============================  TEST FOR BALANCED PARENTHESES  ===================

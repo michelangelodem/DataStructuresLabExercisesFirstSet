@@ -13,9 +13,10 @@ typedef struct Queue {
     int count;
 } Queue;
 
-void initializeQueue(Queue* q);
-void enqueue(Queue* q, Node* n);
-void dequeue(Queue* q);
+
+int initializeQueue(Queue* q);
+int enqueue(Queue* q, Node* n);
+int dequeue(Queue* q);
 Node* peek(const Queue* q);
 void freeQueue(Queue* q);
 #endif

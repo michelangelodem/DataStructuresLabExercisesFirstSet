@@ -1,10 +1,15 @@
 #include "queue.h"
 
-void initializeQueue(Queue* q) {
+int initializeQueue(Queue* q) {
+    if (q == NULL) {
+        fprintf(stderr, "ERROR: Queue pointer is NULL\n");
+        return 0;
+    }
+    
     q->data = (Node**)malloc(sizeof(Node*) * MAX_SIZE);
 
-    // Έλεγχος αν η μνήμη δεσμεύτηκε επιτυχώς
     if (q->data == NULL) {
+        fprintf(stderr, "ERROR: Failed to allocate memory for queue\n");
         return 0; 
     }
 
@@ -14,8 +19,16 @@ void initializeQueue(Queue* q) {
     return 1;
 }
 
-void enqueue(Queue* q, Node* n) {
-  if (q->count == MAX_SIZE) { return 0; }
+int enqueue(Queue* q, Node* n) {
+    if (q == NULL || q->data == NULL) {
+        fprintf(stderr, "ERROR: Invalid queue\n");
+        return 0;
+    }
+    
+    if (q->count == MAX_SIZE) {
+        fprintf(stderr, "ERROR: Queue overflow\n");
+        return 0;
+    }
     
     q->back = (q->back + 1) % MAX_SIZE; 
     q->data[q->back] = n; 
@@ -24,9 +37,14 @@ void enqueue(Queue* q, Node* n) {
     return 1;
 }
 
-void dequeue(Queue* q) {
-    // Αν η ουρά είναι άδεια, επιστρέφει false
+int dequeue(Queue* q) {
+    if (q == NULL) {
+        fprintf(stderr, "ERROR: Queue pointer is NULL\n");
+        return 0;
+    }
+
     if (q->count == 0) {
+        fprintf(stderr, "ERROR: Queue underflow\n");
         return 0; 
     }
 

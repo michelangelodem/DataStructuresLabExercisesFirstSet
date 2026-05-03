@@ -9,15 +9,25 @@
 int testCount = 0;
 int passCount = 0;
 
+
+// Αυτη η συναρτιση μας επτιτρεπει να ελεγξουμε ευκοα την λειτουργια του κωδικα.
+// Εχει ως ορισματα ενα message που περιγραφει το test
+// και μια προβλεπομενη συνθηκη που πρεπει να ισχυει για να περασει το test.
+
 void runTest(const char* testName, int condition) {
     testCount++;
+    // Αν το test βγαλει την προβλεπόμενη συνθηκη τοτε περναει.
     if (condition) {
         printf("Test %d PASS: %s\n", testCount, testName);
         passCount++;
     } else {
-        printf("Τest %d FAIL: %s\n", testCount, testName);
+        printf("Test %d FAIL: %s\n", testCount, testName);
     }
 }
+
+// Χρησημοποιουμε inorder αναπαρασταση του δεντρου γιατι:
+// 1. Ειναι ευκολο να διαβασουμε και να κατανοησουμε τη δομη του δεντρου.
+// 2. Ειναι ευκολο να προσδιορισουμε τα δεξια και τα αριστερα παιδια καθε κομβου.
 
 void inOrderTraversal(const Node* root) {
     if (root == NULL) {

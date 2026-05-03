@@ -6,8 +6,16 @@ void printLevels(const Node* root) {
     }
 
     Queue q;
-    initializeQueue(&q);
-    enqueue(&q, (Node*)root);
+    if (!initializeQueue(&q)) {
+        fprintf(stderr, "ERROR: Failed to initialize queue in printLevels\n");
+        return;
+    }
+    
+    if (!enqueue(&q, (Node*)root)) {
+        fprintf(stderr, "ERROR: Failed to enqueue root node\n");
+        freeQueue(&q);
+        return;
+    }
 
     int currentLevel = 0;
     int nodesInCurrentLevel = 1;
@@ -23,11 +31,15 @@ void printLevels(const Node* root) {
         dequeue(&q);
 
         if (currentNode->left) {
-            enqueue(&q, currentNode->left);
+            if (!enqueue(&q, currentNode->left)) {
+                fprintf(stderr, "ERROR: Failed to enqueue left child\n");
+            }
             nodesInNextLevel++;
         }
         if (currentNode->right) {
-            enqueue(&q, currentNode->right);
+            if (!enqueue(&q, currentNode->right)) {
+                fprintf(stderr, "ERROR: Failed to enqueue right child\n");
+            }
             nodesInNextLevel++;
         }
 

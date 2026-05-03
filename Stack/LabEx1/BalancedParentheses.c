@@ -1,4 +1,4 @@
-#include "BalancedParantheses.h"
+#include "BalancedParentheses.h"
 
 void push(Stack *stack, char value) {
     if (stack == NULL) {

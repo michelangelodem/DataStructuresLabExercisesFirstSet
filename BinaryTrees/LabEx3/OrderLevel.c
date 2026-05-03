@@ -24,8 +24,16 @@ void printLevelOrder(const Node* root) {
     }
 
     Queue q;
-    initializeQueue(&q);
-    enqueue(&q, (Node*)root);
+    if (!initializeQueue(&q)) {
+        fprintf(stderr, "ERROR: Failed to initialize queue in printLevelOrder\n");
+        return;
+    }
+    
+    if (!enqueue(&q, (Node*)root)) {
+        fprintf(stderr, "ERROR: Failed to enqueue root node\n");
+        freeQueue(&q);
+        return;
+    }
 
     while (q.front <= q.back) {
         Node* currentNode = peek(&q);

@@ -1,15 +1,6 @@
-#include "RecreateBinaryTree.h"
+#include "RecreateBTOptimised.h"
 
-static int findIndex(const char inorder[], int start, int end, char value) {
-    for (int i = start; i <= end; i++) {
-        if (inorder[i] == value) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-Node* buildTreeFromPreIn(const char preorder[], const char inorder[], int inStart, int inEnd, int* preIndex) {
+Node* buildTreeFromPreInOptimized(const char preorder[], const char inorder[], int inStart, int inEnd, HashTable* ht, int* preIndex) {
     if (inStart > inEnd || *preIndex < 0) {
         return NULL;
     }
@@ -24,17 +15,17 @@ Node* buildTreeFromPreIn(const char preorder[], const char inorder[], int inStar
         return node;
     }
 
-    int inIndex = findIndex(inorder, inStart, inEnd, current);
-    if (inIndex == -1) {
+    int inIndex = getHashNodeValueInRange(ht, current, inStart, inEnd);
+    if (inIndex < inStart || inIndex > inEnd) {
         return node;
     }
 
-    node->left = buildTreeFromPreIn(preorder, inorder, inStart, inIndex - 1, preIndex);
-    node->right = buildTreeFromPreIn(preorder, inorder, inIndex + 1, inEnd, preIndex);
+    node->left = buildTreeFromPreInOptimized(preorder, inorder, inStart, inIndex - 1, ht, preIndex);
+    node->right = buildTreeFromPreInOptimized(preorder, inorder, inIndex + 1, inEnd, ht, preIndex);
     return node;
 }
 
-Node* buildTreeFromPostIn(const char postorder[], const char inorder[], int inStart, int inEnd, int *postIndex) {
+Node* buildTreeFromPostInOptimized(const char postorder[], const char inorder[], int inStart, int inEnd, HashTable* ht, int* postIndex) {
     if (inStart > inEnd || *postIndex < 0) {
         return NULL;
     }
@@ -49,13 +40,13 @@ Node* buildTreeFromPostIn(const char postorder[], const char inorder[], int inSt
         return node;
     }
 
-    int inIndex = findIndex(inorder, inStart, inEnd, current);
-    if (inIndex == -1) {
+    int inIndex = getHashNodeValueInRange(ht, current, inStart, inEnd);
+    if (inIndex < inStart || inIndex > inEnd) {
         return node;
     }
 
-    node->right = buildTreeFromPostIn(postorder, inorder, inIndex + 1, inEnd, postIndex);
-    node->left = buildTreeFromPostIn(postorder, inorder, inStart, inIndex - 1, postIndex);
+    node->right = buildTreeFromPostInOptimized(postorder, inorder, inIndex + 1, inEnd, ht, postIndex);
+    node->left = buildTreeFromPostInOptimized(postorder, inorder, inStart, inIndex - 1, ht, postIndex);
     return node;
 }
 
